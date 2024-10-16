@@ -1,116 +1,102 @@
-import React, { useContext, useState } from 'react'
-import { TextField, Button, InputAdornment, InputLabel, OutlinedInput, FormControl, IconButton, FormHelperText } from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import GoogleIcon from '@mui/icons-material/Google';
-import FacebookIcon from '@mui/icons-material/Facebook';
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import "../styles/home.css"
-import Alertss from "./Alertss";
-import { AlertContext } from '../context/AlertContext';
-import { useFormik } from 'formik'
-import * as Yup from 'yup';
-import Visibility from '@mui/icons-material/Visibility';
-import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import React, { useState } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 
+const Login = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const navigate = useNavigate(); // Initialize useNavigate
 
-function Login(props) {
-
-    const location = useLocation()
-    const navigate = useNavigate()
-    const { showAlert } = useContext(AlertContext)
-    const [showPassword, setShowPassword] = useState(false)
-
-    const loginSchema = Yup.object().shape({
-        username: Yup.string().min(3).max(25).required().matches(/^[a-z0-9]+$/i, "Username should contain alphabets and numbers only"),
-        password: Yup.string().required().min(4).matches(/^[a-z0-9]+$/i, "Password should contain alphabets and numbers only")
-    })
-
-    const formik = useFormik({
-        initialValues: {
-            username: "",
-            password: ""
-        },
-        validationSchema: loginSchema,
-        onSubmit: async (values) => {
-            const response = await fetch("http://localhost:8080/api/auth/login", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(values)
-            })
-            const json = await response.json()
-
-            if (json.success) {
-                localStorage.setItem("token", json.authToken)
-                navigate(`/`)
-                showAlert(`Welcome back ${values.username}`, "success")
-            } else {
-                showAlert(json.message, "error")
-            }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post(
+        "http://localhost:8080/api/auth/login",
+        {
+          email,
+          password,
         }
-    })
+      );
 
-    const { errors, touched, handleSubmit, getFieldProps } = formik;
+      console.log("Login successful", response.data);
 
-    const handleClickShowPassword = () => {
-        setShowPassword(!showPassword)
-    };
+      // Assuming you get a token from the response, save it in local storage or cookies
 
-    const handleMouseDownPassword = (event) => {
-        event.preventDefault();
-    };
+      console.log(response.data);
+      const dummyUser = "670f8b370591cde59e0d211b";
+      localStorage.setItem("userId", dummyUser);
+      // Redirect to the home page
+      navigate("/home");
+    } catch (error) {
+      console.error("Error:", error.response?.data || error.message);
+    }
 
-    return (
-        <div>
-            <Alertss alert={alert} />
-            <div className="container mt-5 addnotes" >
-                <Button className="mb-4" variant="text" color="secondary" startIcon={<ArrowBackIcon />} component={Link} to="/" style={{ textTransform: "none", fontFamily: "'Poppins', sans-serif" }}>Home</Button>
-                <h2 style={{ fontWeight: "Bold" }}>Login</h2>
-                <p className="mb-4">Sign in on the internal platform</p>
-                <div className="d-flex">
-                    <Button size="large" fullWidth className="mb-4 me-4" variant="contained" color="primary" startIcon={<FacebookIcon />} component={Link} to="/" style={{ textTransform: "none", fontSize: "1.1rem", color: "White", fontFamily: "'Poppins', sans-serif" }}>Login with Facebook</Button>
-                    <Button size="large" fullWidth className="mb-4" variant="contained" color="error" startIcon={<GoogleIcon />} component={Link} to="/" style={{ textTransform: "none", fontSize: "1.1rem", color: "White", fontFamily: "'Poppins', sans-serif" }}>Login with Google</Button>
-                </div>
-                <p className="mb-4 d-flex justify-content-center">or login with username and password</p>
-                <form autoComplete="off" noValidate onSubmit={handleSubmit}>
-                    <div className="mb-4">
-                        <TextField {...getFieldProps('username')}
-                            color="secondary" label="Username" variant="outlined" fullWidth
-                            error={Boolean(touched.username && errors.username)}
-                            helperText={touched.username && errors.username} />
-                    </div>
-                    <div className="mb-4">
-                        <FormControl variant="outlined" fullWidth>
-                            <InputLabel color="secondary" error={Boolean(touched.password && errors.password)} htmlFor="outlined-adornment-password">Password</InputLabel>
-                            <OutlinedInput
-                                id="outlined-adornment-password"
-                                color="secondary"
-                                type={showPassword ? 'text' : 'password'}
-                                {...getFieldProps('password')}
-                                error={Boolean(touched.password && errors.password)}
-                                endAdornment={
-                                    <InputAdornment position="end">
-                                        <IconButton
-                                            aria-label="toggle password visibility"
-                                            onClick={handleClickShowPassword}
-                                            onMouseDown={handleMouseDownPassword}
-                                            edge="end"
-                                        >
-                                            {showPassword ? <VisibilityOff /> : <Visibility />}
-                                        </IconButton>
-                                    </InputAdornment>
-                                }
-                                label="Password" />
-                                <FormHelperText error={Boolean(touched.password && errors.password)} id="outlined-weight-helper-text">{touched.password && errors.password}</FormHelperText>
-                        </FormControl>
-                    </div>
-                    <Button type="submit" fullWidth size="large" className="mb-4" variant="contained" color="secondary" style={{ textTransform: "none", fontFamily: "'Poppins', sans-serif", fontSize: "1.1rem" }}>Login</Button>
-                </form>
-                <p>Don't have an account? <Link to="/register" >register</Link> </p>
-            </div>
+    // Clear the form
+    setEmail("");
+    setPassword("");
+  };
+
+  return (
+    <div style={styles.container}>
+      <h2>Login</h2>
+      <form onSubmit={handleSubmit} style={styles.form}>
+        <div style={styles.inputGroup}>
+          <label>Email:</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            style={styles.input}
+          />
         </div>
-    )
-}
+        <div style={styles.inputGroup}>
+          <label>Password:</label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            style={styles.input}
+          />
+        </div>
+        <button type="submit" style={styles.button}>
+          Login
+        </button>
+      </form>
+    </div>
+  );
+};
 
-export default Login
+const styles = {
+  container: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    height: "100vh",
+    backgroundColor: "#f4f4f4",
+  },
+  form: {
+    display: "flex",
+    flexDirection: "column",
+    width: "300px",
+  },
+  inputGroup: {
+    marginBottom: "15px",
+  },
+  input: {
+    width: "100%",
+    padding: "8px",
+    fontSize: "16px",
+  },
+  button: {
+    padding: "10px",
+    backgroundColor: "#007bff",
+    color: "white",
+    border: "none",
+    cursor: "pointer",
+  },
+};
+
+export default Login;
